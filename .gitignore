@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / compiled files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.xml
+*.iml
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Editor-specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Aiogram specific
+# Aiogram might generate temporary files or logs
+# If you have a specific logs directory:
+logs/
+# Or if you have a specific database file:
+*.db
+# Or if you store user data locally:
+data/
+
+# Environment variables
+.env
