@@ -11,3 +11,13 @@ class ShowAnswer(CallbackData, prefix='SA'):
     button: str
     target_answer: int
     answer_amount: int
+
+
+class CurrentQuestion(CallbackData, prefix='CQ'):
+    button: str
+    question_id: int
+
+
+class QuestionNavigate(CallbackData, prefix='QN'):
+    button: str
+    question_id: int = 0

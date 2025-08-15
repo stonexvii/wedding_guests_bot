@@ -39,3 +39,10 @@ class UserAnswers(Base):
     question_id: Mapped[str] = mapped_column(Integer, ForeignKey('questions.id'))
     answer_id: Mapped[int] = mapped_column(Integer)
     question = relationship('QuestionsTable', back_populates='for_user_answers')
+
+
+class NewlywedsAnswers(Base):
+    __tablename__ = 'newlyweds'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    question_id: Mapped[str] = mapped_column(Integer, ForeignKey('questions.id'))
+    answer_id: Mapped[int] = mapped_column(Integer)

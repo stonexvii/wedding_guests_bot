@@ -1,5 +1,5 @@
 from aiogram import Router, Bot, F
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 
@@ -7,11 +7,43 @@ import config
 from classes import FileManager
 from database import requests
 from .fsm_states import ShowAnswer
-from keyboards import ikb_answers, ikb_show_answer
+from keyboards import ikb_questions, ikb_answers, ikb_show_answer, ikb_question_menu
+from keyboards.callback_data import CurrentQuestion, QuestionNavigate
 from middlewares import AdminMiddleware
+from misc import build_text_message
 
 admin_router = Router()
 admin_router.message.middleware(AdminMiddleware())
+
+
+@admin_router.callback_query(QuestionNavigate.filter(F.button == 'back'))
+@admin_router.message(Command('begin'))
+async def start_wedding(message: Message | CallbackQuery, bot: Bot):
+    questions = await requests.all_questions()
+    if isinstance(message, Message):
+        await message.answer(
+            text='Выбери вопрос:',
+            reply_markup=ikb_questions(questions),
+        )
+    else:
+        await bot.edit_message_text(
+            chat_id=message.from_user.id,
+            message_id=message.message.message_id,
+            text='Выбери вопрос:',
+            reply_markup=ikb_questions(questions),
+        )
+
+
+@admin_router.callback_query(CurrentQuestion.filter(F.button == 'target'))
+async def target_question(callback: CallbackQuery, callback_data: CurrentQuestion, bot: Bot):
+    question_id = callback_data.question_id
+    question = await requests.get_question(question_id)
+    await bot.edit_message_text(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
+        text=build_text_message(question),
+        reply_markup=ikb_question_menu(question_id),
+    )
 
 
 @admin_router.message(Command('all'))
@@ -47,18 +79,24 @@ async def command_set(message: Message, command: CommandObject):
     )
 
 
-@admin_router.message(Command('del'))
-async def command_set(message: Message, command: CommandObject):
-    question_id = int(command.args)
+@admin_router.callback_query(QuestionNavigate.filter(F.button == 'delete'))
+async def question_delete(callback: CallbackQuery, callback_data: QuestionNavigate, bot: Bot):
+    question_id = callback_data.question_id
     await requests.delete_question(
         question_id=question_id,
     )
+    await callback.answer(
+        text=f'Вопрос #{question_id} удален!',
+        show_alert=True,
+    )
+    await start_wedding(callback, bot)
 
 
-@admin_router.message(Command('show'))
-async def show_answers(message: Message, command: CommandObject, state: FSMContext, bot: Bot):
+@admin_router.callback_query(QuestionNavigate.filter(F.button == 'results'))
+async def question_results(callback: CallbackQuery, callback_data: QuestionNavigate, state: FSMContext, bot: Bot):
+    print('Catch')
     await state.set_state(ShowAnswer.next_answer)
-    question_id = int(command.args)
+    question_id = callback_data.question_id
     quest_data = await requests.get_question(question_id)
     question, answers = quest_data
     answers_dict = {answer.answer_id: answer.answer for answer in answers}
@@ -71,7 +109,9 @@ async def show_answers(message: Message, command: CommandObject, state: FSMConte
         for answer in answers:
             count = answers_count[answer.answer_id]
             msg_txt += f'\t{count} {answer.answer}\n'
-    await message.answer(
+    await bot.edit_message_text(
+        chat_id=callback.from_user.id,
+        message_id=callback.message.message_id,
         text=msg_txt,
         reply_markup=ikb_show_answer(answers_list, answers_dict),
     )
@@ -84,27 +124,30 @@ async def show_answers(message: Message, command: CommandObject, state: FSMConte
     })
 
 
-@admin_router.message()
-async def send_question(message: Message, bot: Bot):
-    question_id = int(message.text)
+@admin_router.callback_query(QuestionNavigate.filter(F.button == 'send'))
+async def send_question(callback: CallbackQuery, callback_data: QuestionNavigate, bot: Bot):
+    question_id = callback_data.question_id
     response = await requests.get_question(question_id)
-    if response:
-        question, answers = response
-        users_list = await requests.all_users()
-        for user_id in users_list:
-            if user_id not in (config.ADMIN_TG_ID, config.MONITOR_TG_ID):
-                try:
-                    await bot.send_message(
-                        chat_id=user_id,
-                        text=question.question,
-                        reply_markup=ikb_answers(
-                            message.from_user.id,
-                            response,
-                        ),
-                    )
-                except:
-                    print(f'Не удалось отправить: {user_id}')
-    else:
-        await message.answer(
-            text=f'Вопроса №{question_id} не существует!'
-        )
+    question, answers = response
+    users_list = await requests.all_users()
+    count_correct, count_exception = 0, 0
+    for user_id in users_list:
+        if user_id not in (config.ADMIN_TG_ID, config.MONITOR_TG_ID):
+            try:
+                # await bot.send_message(
+                #     chat_id=user_id,
+                #     text=question.question,
+                #     reply_markup=ikb_answers(
+                #         user_id,
+                #         response,
+                #     ),
+                # )
+                print('ОТправлено')
+                count_correct += 1
+            except:
+                print(f'Не удалось отправить: {user_id}')
+                count_exception += 1
+    await callback.answer(
+        text=f'Успешно: {count_correct}\nНе отправлено: {count_exception}',
+        show_alert=True,
+    )

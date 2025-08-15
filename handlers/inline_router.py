@@ -4,15 +4,15 @@ from aiogram.fsm.context import FSMContext
 
 import config
 from database import requests
-from .fsm_states import ShowAnswer
+# from .fsm_states import ShowAnswer
 from keyboards import ikb_show_answer
-from keyboards.callback_data import UserAnswer, ShowAnswer
+from keyboards.callback_data import UserAnswer, ShowAnswer, QuestionNavigate
 
 inline_router = Router()
 
 
-@inline_router.callback_query(ShowAnswer.filter(), ShowAnswer.filter(F.button == 'target'))
-async def show_answer(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
+@inline_router.callback_query(ShowAnswer.filter(F.button == 'target'))
+async def questions_results(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
     data = await state.get_data()
     answers_dict = data['answers_dict']
     answers_list = data['answers_list']

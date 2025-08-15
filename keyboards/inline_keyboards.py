@@ -1,7 +1,46 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from collections import namedtuple
+
 from database.tables import QuestionsTable, AnswersTable
-from .callback_data import UserAnswer, ShowAnswer
+from .callback_data import UserAnswer, ShowAnswer, CurrentQuestion, QuestionNavigate
+
+Button = namedtuple('Button', ['text', 'callback'])
+
+
+def ikb_questions(questions: list[QuestionsTable]):
+    keyboard = InlineKeyboardBuilder()
+    for question in sorted(questions, key=lambda x: x.id):
+        keyboard.button(
+            text=f'{question.id}: {question.question}',
+            callback_data=CurrentQuestion(
+                button='target',
+                question_id=question.id,
+            ),
+        )
+    keyboard.adjust(1)
+    return keyboard.as_markup()
+
+
+def ikb_question_menu(question_id: int):
+    keyboard = InlineKeyboardBuilder()
+    buttons = [
+        Button('Отправить', 'send'),
+        Button('Сбросить', 'back'),
+        Button('Результаты', 'results'),
+        Button('Удалить', 'delete'),
+        Button('Назад', 'back'),
+    ]
+    for button in buttons:
+        keyboard.button(
+            text=button.text,
+            callback_data=QuestionNavigate(
+                button=button.callback,
+                question_id=question_id,
+            ),
+        )
+    keyboard.adjust(3, 2)
+    return keyboard.as_markup()
 
 
 def ikb_answers(user_id: int, quest_data: list[QuestionsTable, list[AnswersTable]]):
