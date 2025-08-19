@@ -9,6 +9,7 @@ class UserAnswer(CallbackData, prefix='UA'):
 
 class ShowAnswer(CallbackData, prefix='SA'):
     button: str
+    position: int
     target_answer: int
     answer_amount: int
 

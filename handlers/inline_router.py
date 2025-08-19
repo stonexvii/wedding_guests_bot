@@ -3,8 +3,9 @@ from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 import config
+from .admin_router import start_wedding
+from classes import file_manager, push_message
 from database import requests
-# from .fsm_states import ShowAnswer
 from keyboards import ikb_show_answer
 from keyboards.callback_data import UserAnswer, ShowAnswer, QuestionNavigate
 
@@ -14,16 +15,21 @@ inline_router = Router()
 @inline_router.callback_query(ShowAnswer.filter(F.button == 'target'))
 async def questions_results(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
     data = await state.get_data()
+    json_data = data['json']
     answers_dict = data['answers_dict']
     answers_list = data['answers_list']
-    answers_list.remove((callback_data.target_answer, callback_data.answer_amount))
-    out_message = await bot.send_message(
-        chat_id=config.MONITOR_TG_ID,
-        text=f'{data['question']}\n{answers_dict[callback_data.target_answer]} {callback_data.answer_amount}',
-    )
-    out_messages = await state.get_value('messages_id')
-    out_messages.append(out_message.message_id)
-    await state.update_data(messages_id=out_messages, answers_list=answers_list)
+    answers_list.remove((callback_data.position, callback_data.target_answer, callback_data.answer_amount))
+    # out_message = await bot.send_message(
+    #     chat_id=config.MONITOR_TG_ID,
+    #     text=f'{data['question']}\n{answers_dict[callback_data.target_answer]} {callback_data.answer_amount}',
+    # )
+    json_data[
+        f'answer_{callback_data.position}'] = f'{callback_data.answer_amount}: {answers_dict[callback_data.target_answer]}'
+    # out_messages = await state.get_value('messages_id')
+    # out_messages.append(out_message.message_id)
+    # await state.update_data(messages_id=out_messages, answers_list=answers_list, json=json_data)
+    await state.update_data(answers_list=answers_list, json=json_data)
+    push_message(json_data)
     await bot.edit_message_text(
         chat_id=callback.from_user.id,
         message_id=callback.message.message_id,
@@ -33,18 +39,27 @@ async def questions_results(callback: CallbackQuery, callback_data: ShowAnswer, 
 
 
 @inline_router.callback_query(ShowAnswer.filter(), ShowAnswer.filter(F.button == 'reset'))
-async def show_answer(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
-    data = await state.get_data()
-    for message_id in data['messages_id']:
-        await bot.delete_message(
-            chat_id=config.MONITOR_TG_ID,
-            message_id=message_id,
-        )
+async def clear_answers(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
+    # data = await state.get_data()
+    # for message_id in data['messages_id']:
+    #     await bot.delete_message(
+    #         chat_id=config.MONITOR_TG_ID,
+    #         message_id=message_id,
+    #     )
+    json_data = {
+        'question': 'Кирилл и Таня',
+        'answer_1': '',
+        'answer_2': '',
+        'answer_3': '',
+        'answer_4': '',
+    }
+    push_message(json_data)
     await callback.answer(
         text='Вывод очищен!',
         show_alert=True,
     )
     await state.clear()
+    await start_wedding(callback, bot)
 
 
 @inline_router.callback_query(UserAnswer.filter())

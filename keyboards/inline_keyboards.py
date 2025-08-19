@@ -59,14 +59,15 @@ def ikb_answers(user_id: int, quest_data: list[QuestionsTable, list[AnswersTable
     return keyboard.as_markup()
 
 
-def ikb_show_answer(answers: list[tuple[int, int]], answers_text: dict[int, str]):
+def ikb_show_answer(answers: list[tuple[int, int, int]], answers_text: dict[int, str]):
     keyboard = InlineKeyboardBuilder()
     if answers:
-        for answer_id, answer_amount in answers:
+        for position, answer_id, answer_amount in answers:
             keyboard.button(
                 text=answers_text[answer_id],
                 callback_data=ShowAnswer(
                     button='target',
+                    position=position,
                     target_answer=answer_id,
                     answer_amount=answer_amount,
                 ),
@@ -76,6 +77,7 @@ def ikb_show_answer(answers: list[tuple[int, int]], answers_text: dict[int, str]
             text='Очистить',
             callback_data=ShowAnswer(
                 button='reset',
+                position=0,
                 target_answer=0,
                 answer_amount=0,
             ),

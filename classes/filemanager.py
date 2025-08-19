@@ -4,13 +4,12 @@ import os
 
 class FileManager:
     _DIR_MESSAGES = 'messages'
+    _instance = None
 
-    # _instance = None
-    #
-    # def __new__(cls, *args, **kwargs):
-    #     if cls._instance is None:
-    #         cls._instance = super().__new__(*args, **kwargs)
-    #     return cls._instance
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+        return cls._instance
 
     @classmethod
     async def read(cls, path: str):

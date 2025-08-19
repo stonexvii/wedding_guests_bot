@@ -4,7 +4,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 
 import config
-from classes import FileManager
+from classes import FileManager, push_message
 from database import requests
 from .fsm_states import ShowAnswer
 from keyboards import ikb_questions, ikb_answers, ikb_show_answer, ikb_question_menu
@@ -17,7 +17,7 @@ admin_router.message.middleware(AdminMiddleware())
 
 
 @admin_router.callback_query(QuestionNavigate.filter(F.button == 'back'))
-@admin_router.message(Command('begin'))
+@admin_router.message(Command('start'))
 async def start_wedding(message: Message | CallbackQuery, bot: Bot):
     questions = await requests.all_questions()
     if isinstance(message, Message):
@@ -94,16 +94,22 @@ async def question_delete(callback: CallbackQuery, callback_data: QuestionNaviga
 
 @admin_router.callback_query(QuestionNavigate.filter(F.button == 'results'))
 async def question_results(callback: CallbackQuery, callback_data: QuestionNavigate, state: FSMContext, bot: Bot):
-    print('Catch')
     await state.set_state(ShowAnswer.next_answer)
     question_id = callback_data.question_id
     quest_data = await requests.get_question(question_id)
     question, answers = quest_data
+    json_data = {
+        'question': question.question,
+        'answer_1': '',
+        'answer_2': '',
+        'answer_3': '',
+        'answer_4': '',
+    }
     answers_dict = {answer.answer_id: answer.answer for answer in answers}
     user_answers = await requests.collect_answers(question_id)
-    total_answers = len(user_answers)
     answers_count = {ans.answer_id: user_answers.count(ans.answer_id) for ans in answers}
-    answers_list = sorted(list(answers_count.items()), key=lambda x: x[1], reverse=True)
+    answers_list = [(pos, answer_id, answer_amount) for pos, (answer_id, answer_amount) in
+                    enumerate(sorted(list(answers_count.items()), key=lambda x: x[1], reverse=True), 1)]
     msg_txt = f'{question.question}\n'
     if answers:
         for answer in answers:
@@ -115,12 +121,14 @@ async def question_results(callback: CallbackQuery, callback_data: QuestionNavig
         text=msg_txt,
         reply_markup=ikb_show_answer(answers_list, answers_dict),
     )
+    push_message(json_data)
     await state.set_data({
+        'json': json_data,
         'answers_list': answers_list,
         'answers_dict': answers_dict,
         'text': msg_txt,
         'question': question.question,
-        'messages_id': [],
+        # 'messages_id': [],
     })
 
 
