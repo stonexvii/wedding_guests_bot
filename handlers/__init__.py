@@ -7,7 +7,8 @@ from .inline_router import inline_router
 main_router = Router()
 
 main_router.include_routers(
-    admin_router,
+
     command_router,
     inline_router,
+admin_router,
 )

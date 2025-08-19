@@ -17,7 +17,7 @@ admin_router.message.middleware(AdminMiddleware())
 
 
 @admin_router.callback_query(QuestionNavigate.filter(F.button == 'back'))
-@admin_router.message(Command('start'))
+@admin_router.message(Command('begin'))
 async def start_wedding(message: Message | CallbackQuery, bot: Bot):
     questions = await requests.all_questions()
     if isinstance(message, Message):
@@ -128,7 +128,6 @@ async def question_results(callback: CallbackQuery, callback_data: QuestionNavig
         'answers_dict': answers_dict,
         'text': msg_txt,
         'question': question.question,
-        # 'messages_id': [],
     })
 
 
@@ -142,18 +141,20 @@ async def send_question(callback: CallbackQuery, callback_data: QuestionNavigate
     for user_id in users_list:
         if user_id not in (config.ADMIN_TG_ID, config.MONITOR_TG_ID):
             try:
-                # await bot.send_message(
-                #     chat_id=user_id,
-                #     text=question.question,
-                #     reply_markup=ikb_answers(
-                #         user_id,
-                #         response,
-                #     ),
-                # )
-                print('ОТправлено')
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=question.question,
+                    reply_markup=ikb_answers(
+                        user_id,
+                        response,
+                    ),
+                )
                 count_correct += 1
             except:
-                print(f'Не удалось отправить: {user_id}')
+                await bot.send_message(
+                    chat_id=callback.from_user.id,
+                    text=f'Не удалось отправить: {user_id}',
+                )
                 count_exception += 1
     await callback.answer(
         text=f'Успешно: {count_correct}\nНе отправлено: {count_exception}',

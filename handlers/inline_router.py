@@ -2,12 +2,11 @@ from aiogram import Router, Bot, F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-import config
 from .admin_router import start_wedding
-from classes import file_manager, push_message
+from classes import push_message
 from database import requests
 from keyboards import ikb_show_answer
-from keyboards.callback_data import UserAnswer, ShowAnswer, QuestionNavigate
+from keyboards.callback_data import UserAnswer, ShowAnswer
 
 inline_router = Router()
 
@@ -19,15 +18,8 @@ async def questions_results(callback: CallbackQuery, callback_data: ShowAnswer, 
     answers_dict = data['answers_dict']
     answers_list = data['answers_list']
     answers_list.remove((callback_data.position, callback_data.target_answer, callback_data.answer_amount))
-    # out_message = await bot.send_message(
-    #     chat_id=config.MONITOR_TG_ID,
-    #     text=f'{data['question']}\n{answers_dict[callback_data.target_answer]} {callback_data.answer_amount}',
-    # )
     json_data[
         f'answer_{callback_data.position}'] = f'{callback_data.answer_amount}: {answers_dict[callback_data.target_answer]}'
-    # out_messages = await state.get_value('messages_id')
-    # out_messages.append(out_message.message_id)
-    # await state.update_data(messages_id=out_messages, answers_list=answers_list, json=json_data)
     await state.update_data(answers_list=answers_list, json=json_data)
     push_message(json_data)
     await bot.edit_message_text(
@@ -40,12 +32,6 @@ async def questions_results(callback: CallbackQuery, callback_data: ShowAnswer, 
 
 @inline_router.callback_query(ShowAnswer.filter(), ShowAnswer.filter(F.button == 'reset'))
 async def clear_answers(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
-    # data = await state.get_data()
-    # for message_id in data['messages_id']:
-    #     await bot.delete_message(
-    #         chat_id=config.MONITOR_TG_ID,
-    #         message_id=message_id,
-    #     )
     json_data = {
         'question': 'Кирилл и Таня',
         'answer_1': '',

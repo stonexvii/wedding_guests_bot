@@ -7,7 +7,8 @@ pusher_client = pusher.Pusher(
     key=config.PUSHER_KEY,
     secret=config.PUSHER_SECRET,
     cluster=config.PUSHER_CLUSTER,
-    ssl=True
+    ssl=True,
+    timeout=15,
 )
 
 
