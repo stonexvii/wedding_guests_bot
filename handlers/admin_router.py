@@ -3,6 +3,8 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 
+import os
+
 import config
 from classes import FileManager, push_message
 from database import requests
@@ -55,6 +57,22 @@ async def command_write(message: Message, command: CommandObject):
     )
 
 
+@admin_router.message(Command('del'))
+async def command_del(message: Message, command: CommandObject):
+    if command.args:
+        print('YES')
+        file_names = command.args.split()
+        for file_name in file_names:
+            file_path = os.path.join('messages', f'{file_name}.txt')
+            if os.path.exists(file_path):
+                os.remove(os.path.join('messages', f'{file_name}.txt'))
+    else:
+        files = os.listdir('messages')
+        for file in files:
+            if file.endswith('.txt') and file.split('.')[0] not in ('intro', 'cap'):
+                os.remove(os.path.join('messages', file))
+
+
 @admin_router.message(Command('set'))
 async def command_set(message: Message, command: CommandObject):
     question_id, question_data = command.args.split(' ', 1)
@@ -92,9 +110,13 @@ async def question_results(callback: CallbackQuery, callback_data: QuestionNavig
         'answer_3': '',
         'answer_4': '',
     }
+    if os.path.exists(os.path.join('messages', f'{question_id}.txt')):
+        data = await FileManager.read(str(question_id))
+        answers_count = {idx: count for idx, count in enumerate(map(int, data.strip().split()), 1)}
+    else:
+        user_answers = await requests.collect_answers(question_id)
+        answers_count = {ans.answer_id: user_answers.count(ans.answer_id) for ans in answers}
     answers_dict = {answer.answer_id: answer.answer for answer in answers}
-    user_answers = await requests.collect_answers(question_id)
-    answers_count = {ans.answer_id: user_answers.count(ans.answer_id) for ans in answers}
     answers_list = [(pos, answer_id, answer_amount) for pos, (answer_id, answer_amount) in
                     enumerate(sorted(list(answers_count.items()), key=lambda x: x[1], reverse=True), 1)]
     msg_txt = f'{question.question}\n'
