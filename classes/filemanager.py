@@ -13,13 +13,14 @@ class FileManager:
 
     @classmethod
     async def read(cls, path: str):
-        path += '.txt'
-        async with aiofiles.open(os.path.join(cls._DIR_MESSAGES, path), 'r', encoding='UTF-8') as file:
-            response = await file.read()
-        return response
+        if path := os.path.join(cls._DIR_MESSAGES, path + '.txt'):
+            async with aiofiles.open(path, 'r', encoding='UTF-8') as file:
+                response = await file.read()
+            return response
+        return 'None'
 
     @classmethod
     async def write(cls, path: str, data: str):
-        path += '.txt'
-        async with aiofiles.open(os.path.join(cls._DIR_MESSAGES, path), 'w', encoding='UTF-8') as file:
+        path = os.path.join(cls._DIR_MESSAGES, path + '.txt')
+        async with aiofiles.open(path, 'w', encoding='UTF-8') as file:
             await file.write(data)

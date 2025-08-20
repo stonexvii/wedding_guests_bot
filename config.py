@@ -1,5 +1,6 @@
 import dotenv
 import os
+# from classes import FileManager
 
 dotenv.load_dotenv()
 
@@ -7,7 +8,7 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 ADMIN_TG_ID = int(os.getenv('ADMIN_TG_ID'))
 # MONITOR_TG_ID = 0
-MONITOR_TG_ID = int(os.getenv('MONITOR_TG_ID'))
+# MONITOR_TG_ID = int(os.getenv('MONITOR_TG_ID'))
 
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
@@ -22,10 +23,5 @@ PUSHER_KEY = os.getenv('PUSHER_KEY')
 PUSHER_SECRET = os.getenv('PUSHER_SECRET')
 PUSHER_CLUSTER = os.getenv('PUSHER_CLUSTER')
 
-{
-    'question': 'sfrdsf',
-    'answer_1': ' ',
-    'answer_2': 'thrthrt',
-    'answer_3': ' ',
-    'answer_4': 'sdfdfgdf',
-}
+# INTRO_MESSAGE = FileManager.read('intro')
+# CAP_MESSAGE = FileManager.read('cap')

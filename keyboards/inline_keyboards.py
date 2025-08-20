@@ -26,9 +26,10 @@ def ikb_question_menu(question_id: int):
     keyboard = InlineKeyboardBuilder()
     buttons = [
         Button('Отправить', 'send'),
-        Button('Сбросить', 'back'),
+        Button('Сколько?', 'amount'),
         Button('Результаты', 'results'),
         Button('Удалить', 'delete'),
+        Button('Сбросить', 'reset'),
         Button('Назад', 'back'),
     ]
     for button in buttons:

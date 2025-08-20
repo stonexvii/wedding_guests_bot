@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from .admin_router import start_wedding
-from classes import push_message
+from classes import push_message, FileManager
 from database import requests
 from keyboards import ikb_show_answer
 from keyboards.callback_data import UserAnswer, ShowAnswer
@@ -33,7 +33,7 @@ async def questions_results(callback: CallbackQuery, callback_data: ShowAnswer, 
 @inline_router.callback_query(ShowAnswer.filter(), ShowAnswer.filter(F.button == 'reset'))
 async def clear_answers(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
     json_data = {
-        'question': 'Кирилл и Таня',
+        'question': await FileManager.read('cap'),
         'answer_1': '',
         'answer_2': '',
         'answer_3': '',

@@ -1,6 +1,6 @@
 from aiogram.types import Message
 
-from sqlalchemy import select
+from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 import config
@@ -29,9 +29,10 @@ async def create_tables():
 
 @connection
 async def add_user(user_tg_id: int, user_name: str, session: AsyncSession):
-    user = Users(id=user_tg_id, username=user_name)
-    session.add(user)
-    await session.commit()
+    user_db = await session.scalar(select(Users).where(Users.id == user_tg_id))
+    if not user_db:
+        session.add(Users(id=user_tg_id, username=user_name))
+        await session.commit()
 
 
 @connection
@@ -77,23 +78,23 @@ async def get_question(question_id: int, session: AsyncSession):
         return question, answers.all()
 
 
-@connection
-async def get_answer(question_id: int, answer_id: int, session: AsyncSession):
-    response = await session.scalar(
-        select(AnswersTable).where(AnswersTable.question_id == question_id, AnswersTable.answer_id == answer_id))
-    return response
+# @connection
+# async def get_answer(question_id: int, answer_id: int, session: AsyncSession):
+#     response = await session.scalar(
+#         select(AnswersTable).where(AnswersTable.question_id == question_id, AnswersTable.answer_id == answer_id))
+#     return response
+#
+#
+# @connection
+# async def get_answers(question_id: int, session: AsyncSession):
+#     response = await session.scalars(select(AnswersTable).where(AnswersTable.question_id == question_id))
+#     return response.all()
 
 
-@connection
-async def get_answers(question_id: int, session: AsyncSession):
-    response = await session.scalars(select(AnswersTable).where(AnswersTable.question_id == question_id))
-    return response.all()
-
-
-@connection
-async def user_next_question_id(user_tg_id: int, session: AsyncSession):
-    response = await session.scalars(select(UserAnswers.question_id).where(UserAnswers.user_id == user_tg_id))
-    return response.all()
+# @connection
+# async def user_next_question_id(user_tg_id: int, session: AsyncSession):
+#     response = await session.scalars(select(UserAnswers.question_id).where(UserAnswers.user_id == user_tg_id))
+#     return response.all()
 
 
 @connection
@@ -124,32 +125,40 @@ async def all_questions(session: AsyncSession):
     return response.all()
 
 
-@connection
-async def all_question_answers(question_id: int, session: AsyncSession):
-    response = await session.scalars(
-        select(AnswersTable).where(AnswersTable.question_id == question_id))
-    return response.all()
+# @connection
+# async def all_question_answers(question_id: int, session: AsyncSession):
+#     response = await session.scalars(
+#         select(AnswersTable).where(AnswersTable.question_id == question_id))
+#     return response.all()
+
+
+# @connection
+# async def collect_user_answers(username: str, session: AsyncSession):
+#     result = []
+#     user_id = await session.scalar(select(Users.id).where(Users.username == username.lower()))
+#     response = await session.scalars(select(UserAnswers).where(UserAnswers.user_id == user_id))
+#     for current_answer in response.all():
+#         question = await get_question(current_answer.question_id)
+#         answer = await get_answer(current_answer.question_id, current_answer.answer_id)
+#         result.append((question[0].question, answer.answer))
+#     return result
 
 
 @connection
-async def collect_user_answers(username: str, session: AsyncSession):
-    result = []
-    user_id = await session.scalar(select(Users.id).where(Users.username == username.lower()))
-    response = await session.scalars(select(UserAnswers).where(UserAnswers.user_id == user_id))
-    for current_answer in response.all():
-        question = await get_question(current_answer.question_id)
-        answer = await get_answer(current_answer.question_id, current_answer.answer_id)
-        result.append((question[0].question, answer.answer))
-    return result
+async def delete_answers(question_id: int, session: AsyncSession):
+    answers = await session.scalars(select(UserAnswers).where(UserAnswers.question_id == question_id))
+    for answer in answers.all():
+        await session.delete(answer)
+    await session.commit()
 
 
-@connection
-async def destruction_of_the_user(admin_tg_id: int, user_tg_id: int, session: AsyncSession):
-    if admin_tg_id == config.ADMIN_TG_ID:
-        user_all_answers = await session.scalars(select(UserAnswers).where(UserAnswers.user_id == user_tg_id))
-        for answer in user_all_answers.all():
-            await session.delete(answer)
-        await session.commit()
-        user = await session.scalar(select(Users).where(Users.id == user_tg_id))
-        await session.delete(user)
-        await session.commit()
+# @connection
+# async def destruction_of_the_user(admin_tg_id: int, user_tg_id: int, session: AsyncSession):
+#     if admin_tg_id == config.ADMIN_TG_ID:
+#         user_all_answers = await session.scalars(select(UserAnswers).where(UserAnswers.user_id == user_tg_id))
+#         for answer in user_all_answers.all():
+#             await session.delete(answer)
+#         await session.commit()
+#         user = await session.scalar(select(Users).where(Users.id == user_tg_id))
+#         await session.delete(user)
+#         await session.commit()
