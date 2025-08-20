@@ -144,7 +144,7 @@ async def send_question(callback: CallbackQuery, callback_data: QuestionNavigate
     users_list = await requests.all_users()
     count_correct, count_exception = 0, 0
     for user_id in users_list:
-        if user_id not in (config.ADMIN_TG_ID, config.MONITOR_TG_ID):
+        if user_id != config.ADMIN_TG_ID:
             try:
                 await bot.send_message(
                     chat_id=user_id,
