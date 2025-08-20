@@ -9,7 +9,6 @@ from database import requests
 from .fsm_states import ShowAnswer
 from keyboards import ikb_questions, ikb_answers, ikb_show_answer, ikb_question_menu
 from keyboards.callback_data import CurrentQuestion, QuestionNavigate
-import messages
 from middlewares import AdminMiddleware
 from misc import build_text_message
 
@@ -47,27 +46,13 @@ async def target_question(callback: CallbackQuery, callback_data: CurrentQuestio
     )
 
 
-# @admin_router.message(Command('all'))
-# async def all_question(message: Message):
-#     msg_text = ''
-#     quest_data = await requests.all_questions()
-#     quest_data = sorted(quest_data, key=lambda x: x.id)
-#     for question in quest_data:
-#         answers = await requests.all_question_answers(question.id)
-#         msg_text += f'#{question.id} {question.question}\n'
-#         for answer in answers:
-#             msg_text += f'\t{answer.answer_id}: {answer.answer}\n'
-#         msg_text += '\n'
-#     await message.answer(
-#         text=msg_text,
-#     )
-
-
 @admin_router.message(Command('write'))
 async def command_write(message: Message, command: CommandObject):
     file_name, data = command.args.split(' ', 1)
     await FileManager.write(file_name, data)
-    Message
+    await message.answer(
+        text=data,
+    )
 
 
 @admin_router.message(Command('set'))

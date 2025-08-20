@@ -31,7 +31,7 @@ async def questions_results(callback: CallbackQuery, callback_data: ShowAnswer, 
 
 
 @inline_router.callback_query(ShowAnswer.filter(), ShowAnswer.filter(F.button == 'reset'))
-async def clear_answers(callback: CallbackQuery, callback_data: ShowAnswer, state: FSMContext, bot: Bot):
+async def clear_answers(callback: CallbackQuery, state: FSMContext, bot: Bot):
     json_data = {
         'question': await FileManager.read('cap'),
         'answer_1': '',
